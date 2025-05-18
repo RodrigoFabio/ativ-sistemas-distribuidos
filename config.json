@@ -1,0 +1,14 @@
+{"config-app":{
+    "url-fila":"http://192.168.1.31:8080/#/",
+    "nome-fila":"exames-pendentes",
+    "url-frontend":"http://localhost:3000",
+    "banco-de-dados":{
+        "host":"host",
+        "porta":3306,
+        "usuario":"root",
+        "senha":"root",
+        "banco":"banco",
+        "url":"mongodb://localhost:27017"
+    }
+    
+}}
