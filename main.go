@@ -1,14 +1,18 @@
 package main
 
-import (
-    "fmt"
-    
-)
+import "fmt"
 
 func main() {
+	config, er := GetConfig()
 
-   fmt.Println("Hello, World!")
-    ConectaBanco()
-    PublishExame("exame")
-    InitRoutes()
+	if er != nil {
+		fmt.Print("ERRO")
+	}
+
+	db := ConectaBanco()
+	SetConfig(config)
+	SetDB(db)
+	InitRoutes()
+	PublishExame("exame")
+
 }

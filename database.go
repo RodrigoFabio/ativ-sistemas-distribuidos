@@ -1,10 +1,13 @@
-package main 
+//database.go
+package main
 
-import ("fmt"
-"os"
-"encoding/json"
+import (
+	"fmt"
+	"os"
+	"database/sql"
 
-_ "go-sql-driver/mysql")
+	_ "github.com/go-sql-driver/mysql"
+)
 
 type BancoDeDados struct {
 	Host     string `json:"host"`
@@ -26,47 +29,43 @@ type ConfigApp struct {
 func GetConfig() (*ConfigApp, error) {
 
 	var Config ConfigApp
-
-	// Ler o arquivo de configuração
-	data, err := os.ReadFile("config.json")
-
-	if err != nil {
-		fmt.Println("Erro ao ler o arquivo de configuração:", err)
-		return nil, err
-	}
-
-	// Exibir o conteúdo do arquivo de configuração
-	fmt.Println("Conteúdo do arquivo de configuração:", string(data))	
-
-	// Fazer o parse do JSON
-	err = json.Unmarshal(data, &Config)
-
-	if err != nil {
-		fmt.Println("Erro ao fazer o parse do JSON:", err)
-		return nil, err
-	}
+	Config.BancoDeDados.Host = os.Getenv("DB_HOST")
+	Config.BancoDeDados.Usuario =  os.Getenv("DB_USER")
+	Config.BancoDeDados.Senha = os.Getenv("DB_PASS")
+	Config.BancoDeDados.Banco = os.Getenv("DB_NAME")
+	Config.NomeFila = os.Getenv("NOME_FILA")
+	Config.URLFila = os.Getenv("URL_FILA")
+	Config.URLFrontend = os.Getenv("URL_FRONTEND")
 	
 	return &Config, nil	
 }
 
-func ConectaBanco() {
+func ConectaBanco() *sql.DB{
 	// Lê o arquivo de configuração
-	config, err := GetConfig()
-	if err != nil {
-		fmt.Println("Erro ao ler o arquivo de configuração:", err)
-		return
+	
+	str_conn := GetStringConfig()
+
+	db, er := sql.Open("mysql", str_conn)
+
+	if er != nil{
+		return nil
 	}
 
+	return db
 	// Conecta ao banco de dados usando as informações do arquivo de configuração
-	fmt.Println("Conectando ao banco de dados...")
-	fmt.Printf("Host: %s\n", config.BancoDeDados.Host)
-	fmt.Printf("Porta: %d\n", config.BancoDeDados.Porta)
-	fmt.Printf("Usuário: %s\n", config.BancoDeDados.Usuario)
-	fmt.Printf("Senha: %s\n", config.BancoDeDados.Senha)
-	fmt.Printf("Banco: %s\n", config.BancoDeDados.Banco)
 
 	//db, err := sql.Open("mysql", "username:password@tcp(127.0.0.1:3306)/test")
+}
 
+func GetStringConfig() string {
+	config, err := GetConfig()
+	db := config.BancoDeDados
+	str_conn := db.Usuario + ":" + db.Senha + "@" + "tcp(" + db.Host + ":" + string(db.Porta) + ")" + "/" + db.Banco
+	
+	if err != nil {
+		fmt.Println("Erro ao ler o arquivo de configuração:", err)
+		return ""
+	}
 
-
+	return str_conn
 }

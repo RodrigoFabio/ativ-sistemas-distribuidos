@@ -1,12 +1,17 @@
+// handlers.go
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/streadway/amqp"
 )
+
+var conn *sql.DB
+var config_app *ConfigApp
+
 
 func failOnError(err error, msg string) {
     if err != nil {
@@ -14,12 +19,23 @@ func failOnError(err error, msg string) {
     }
 }
 
-func PublishExame(exame string) {
-    conn, err := amqp.Dial("amqp://guest:guest@192.168.1.31:5672/")
-    failOnError(err, "Falha ao conectar ao RabbitMQ")
-    defer conn.Close()
+func SetDB(database *sql.DB) {
+	conn = database
+}
 
-    ch, err := conn.Channel()
+func SetConfig(config *ConfigApp){
+    config = config_app
+}
+
+func PublishExame(exame string) {
+    host_fila := config_app.URLFila
+
+    conn_fila, err := amqp.Dial("amqp://guest:guest@"+host_fila+"/")
+
+    failOnError(err, "Falha ao conectar ao RabbitMQ")
+    defer conn_fila.Close()
+
+    ch, err := conn_fila.Channel()
     failOnError(err, "Falha ao abrir canal")
     defer ch.Close()
 
