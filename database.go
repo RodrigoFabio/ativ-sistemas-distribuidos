@@ -42,20 +42,15 @@ func GetConfig() (*ConfigApp, error) {
 }
 
 func ConectaBanco() *sql.DB {
-	// Lê o arquivo de configuração
-
 	str_conn := GetStringConfig()
+	//db, err := sql.Open("mysql", "username:password@tcp(<ip_do_banco>:3306)/banco")
 
 	db, er := sql.Open("mysql", str_conn)
 
 	if er != nil {
 		return nil
 	}
-
 	return db
-	// Conecta ao banco de dados usando as informações do arquivo de configuração
-
-	//db, err := sql.Open("mysql", "username:password@tcp(127.0.0.1:3306)/test")
 }
 
 // func GetStringConfig() string {
@@ -84,17 +79,23 @@ func ConectaBanco() *sql.DB {
 func GetStringConfig() string {
 	var Config ConfigApp
 
-	Config.BancoDeDados.Host = os.Getenv("DB_HOST")
-	Config.BancoDeDados.Usuario = os.Getenv("DB_USER")
-	Config.BancoDeDados.Senha = os.Getenv("DB_PASS")
-	Config.BancoDeDados.Banco = os.Getenv("DB_NAME")
-	Config.NomeFila = os.Getenv("NOME_FILA")
-	Config.URLFila = os.Getenv("URL_FILA")
-	Config.URLFrontend = os.Getenv("URL_FRONTEND")
+	// Config.BancoDeDados.Host = os.Getenv("DB_HOST")
+	// Config.BancoDeDados.Usuario = os.Getenv("DB_USER")
+	// Config.BancoDeDados.Senha = os.Getenv("DB_PASS")
+	// Config.BancoDeDados.Banco = os.Getenv("DB_NAME")
+	// Config.NomeFila = os.Getenv("NOME_FILA")
+	// Config.URLFila = os.Getenv("URL_FILA")
+	// Config.URLFrontend = os.Getenv("URL_FRONTEND")
+
+	Config.BancoDeDados.Host = "192.168.1.31"
+	Config.BancoDeDados.Usuario = "root"
+	Config.BancoDeDados.Senha = "123456"
+	Config.BancoDeDados.Banco = "examed"
+	//Config.NomeFila = "exames-pendentes"
 
 	// Exemplo para MySQL
 	// Formato: usuario:senha@tcp(host:porta)/banco
-	strConn := fmt.Sprintf("%s:%s@tcp(%s)/%s",
+	strConn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s",
 		Config.BancoDeDados.Usuario,
 		Config.BancoDeDados.Senha,
 		Config.BancoDeDados.Host,

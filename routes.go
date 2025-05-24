@@ -9,6 +9,8 @@ func InitRoutes() {
 
 	router.GET("/api/agendamentos",  GetAgendamentos)
 
+	router.GET("/api/recupera-exames",  RecuperaExames)
+
 	router.POST("/api/cadastra-exame",  CadastraExame)
 
 	router.POST("/api/agenda-exame", AgendaExame)

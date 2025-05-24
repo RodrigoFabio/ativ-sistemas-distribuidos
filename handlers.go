@@ -4,8 +4,8 @@ package main
 import (
 	"database/sql"
 	"log"
-   // "fmt"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/streadway/amqp"
 )
@@ -13,142 +13,143 @@ import (
 var conn *sql.DB
 var config_app *ConfigApp
 
+type Exames struct {
+	IdExame    int    `json:"id_exame"`
+	TipoExame  string `json:"tipo_exame"`
+	Instrucoes string `json:"instrucoes"`
+}
+
+type Agendamentos struct {
+	DataHora      string `json:"data_hora"`
+	IdExame       int    `json:"id_exame"`
+	Instrucoes    string `json:"instrucoes"`
+	Paciente      string `json:"nome_paciente"`
+	EmailPaciente string `json:"email_paciente"`
+    CpfPaciente   string `json:"cpf"`
+    CartaoSus   string `json:"cartao_sus"`
+}
 
 func failOnError(err error, msg string) {
-    if err != nil {
-        log.Fatalf("%s: %s", msg, err)
-    }
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+	}
 }
 
 func SetDB(database *sql.DB) {
 	conn = database
 }
 
-func SetConfig(config *ConfigApp){
-    config = config_app
+func SetConfig(config *ConfigApp) {
+	config_app = config
 }
 
 func PublishExame(exame string) {
-    host_fila := config_app.URLFila
+	host_fila := config_app.URLFila
 
-    conn_fila, err := amqp.Dial("amqp://guest:guest@"+host_fila+"/")
+	conn_fila, err := amqp.Dial("amqp://guest:guest@" + host_fila + "/")
 
-    failOnError(err, "Falha ao conectar ao RabbitMQ")
-    defer conn_fila.Close()
+	failOnError(err, "Falha ao conectar ao RabbitMQ")
+	defer conn_fila.Close()
 
-    ch, err := conn_fila.Channel()
-    failOnError(err, "Falha ao abrir canal")
-    defer ch.Close()
+	ch, err := conn_fila.Channel()
+	failOnError(err, "Falha ao abrir canal")
+	defer ch.Close()
 
-
-    body := "Olá, mundo!"
-    err = ch.Publish(
-        "",     // exchange
-        "exames-pendentes", // chave de roteamento (routing key)
-        false,  // mandatory
-        false,  // immediate
-        amqp.Publishing{
-            ContentType: "application/json",
-            Body:        []byte(body),
-        })
-    failOnError(err, "Falha ao publicar mensagem")
-    log.Printf("Mensagem publicada: %s", body)
+	body := "Olá, mundo!"
+	err = ch.Publish(
+		"",                 // exchange
+		"exames-pendentes", // chave de roteamento (routing key)
+		false,              // mandatory
+		false,              // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        []byte(body),
+		})
+	failOnError(err, "Falha ao publicar mensagem")
+	log.Printf("Mensagem publicada: %s", body)
 }
 
-// func GetAgendamentos(c *gin.Context){
-//     conn.Query
-//      c.JSON(http.StatusOK, gin.H{
-//         "message": "Agendamentos",
-//     })
-// }
+func GetAgendamentos(c *gin.Context) {}
 
-// func GetAgendamentos(c *gin.Context) {
-//     // Executa a consulta
-//     rows, err := conn.Query("SELECT * FROM Exames")
-//     if err != nil {
-//         log.Println("Erro ao executar consulta:", err)
-//         c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar exames"})
-//         return
-//     }
-//     defer rows.Close()
+func RecuperaExames(c *gin.Context) {
+	// Executa a consulta
+	rows, err := conn.Query("SELECT id_exame, tipo_exame, instrucoes FROM Exames")
 
-//     // Lê a primeira linha
-//     if rows.Next() {
-//         var id int
-//         var exame string
-//         var instrucoes string
-//         err = rows.Scan(&id, &exame, &instrucoes)
-//         if err != nil {
-//             log.Println("Erro ao ler linha:", err)
-//             c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao ler exame"})
-//             return
-//         }
+	if err != nil {
+		log.Println("Erro ao executar consulta:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar exames"})
+		return
+	}
 
-//         // Retorna os dados como string
-//         resultado := fmt.Sprintf("ID: %d, exame: %s, isntrucoes: %s", id, exame, instrucoes)
-//         c.JSON(http.StatusOK, gin.H{"exame": resultado})
-//         return
-//     }
+	defer rows.Close()
 
-//     // Se não houver dados
-//     c.JSON(http.StatusOK, gin.H{"message": "Nenhum exame encontrado"})
-// }
+	// Slice para armazenar os exames
+	var exames []Exames
 
+	// Itera sobre todas as linhas
+	for rows.Next() {
+		var exame Exames
 
-func GetAgendamentos(c *gin.Context) {
-    // Executa a consulta
-    rows, err := conn.Query("SELECT * FROM Exames")
-    if err != nil {
-        log.Println("Erro ao executar consulta:", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar exames"})
-        return
-    }
-    defer rows.Close()
+		err := rows.Scan(&exame.IdExame, &exame.TipoExame, &exame.Instrucoes)
+		if err != nil {
+			log.Println("Erro ao ler linha:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao ler exames"})
+			return
+		}
 
-    // Slice para armazenar os exames
-    var exames []map[string]interface{}
+		exames = append(exames, exame)
+	}
 
-    // Itera sobre todas as linhas
-    for rows.Next() {
-        var id int
-        var exame string
-        var instrucoes string
+	// Verifica se houve erro durante a iteração
+	if err := rows.Err(); err != nil {
+		log.Println("Erro ao iterar sobre resultados:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao processar exames"})
+		return
+	}
 
-        err := rows.Scan(&id, &exame, &instrucoes)
-        if err != nil {
-            log.Println("Erro ao ler linha:", err)
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao ler exames"})
-            return
-        }
+	// Retorna a lista de exames em JSON
+	c.JSON(http.StatusOK, gin.H{"exames": exames})
+}
 
-        exameData := map[string]interface{}{
-            "id":         id,
-            "exame":      exame,
-            "instrucoes": instrucoes,
-        }
+func CadastraExame(c *gin.Context) {
 
-        exames = append(exames, exameData)
-    }
+	// Obtém os dados do corpo da requisição
+	var exame Exames
+	if err := c.ShouldBindJSON(&exame); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
+		return
+	}
+	// Insere o exame no banco de dados
+	_, err := conn.Exec("INSERT INTO Exames (tipo_exame, instrucoes) VALUES (?, ?)", exame.TipoExame, exame.Instrucoes)
+	if err != nil {
+		log.Println("Erro ao inserir exame:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao cadastrar exame"})
+		return
+	}
 
-    // Verifica se houve algum erro na iteração
-    if err := rows.Err(); err != nil {
-        log.Println("Erro ao iterar sobre resultados:", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao processar exames"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Exame cadastrado com sucesso"})
+}
+
+func AgendaExame(c *gin.Context) {
+
+    var agendamento Agendamentos
+
+    if err := c.ShouldBindJSON(&agendamento); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
         return
     }
 
-    // Retorna a lista de exames em JSON
-    c.JSON(http.StatusOK, gin.H{"exames": exames})
-}
-
-
-
-func CadastraExame(c *gin.Context)  {
+    // Insere o agendamento no banco de dados
+    _, err := conn.Exec("INSERT INTO Agendamentos (data, id_exame, instrucao, nome_paciente, email_paciente, cpf, cartao_sus) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        agendamento.DataHora, agendamento.IdExame, agendamento.Instrucoes, agendamento.Paciente, agendamento.EmailPaciente, agendamento.CpfPaciente, agendamento.CartaoSus)
+    if err != nil { 
+        log.Println("Erro ao inserir agendamento:", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao cadastrar agendamento"})
+        return
+    }
     c.JSON(http.StatusOK, gin.H{
-        "message": "Exame cadastrado com sucesso"}) 
-}
+        "message": "Agendamento cadastrado com sucesso"})  
 
-func AgendaExame(c *gin.Context)  {
-    c.JSON(http.StatusOK, gin.H{
-        "message": "Exame agendado com sucesso"})
+
 }
