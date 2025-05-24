@@ -30,7 +30,7 @@ func GetConfig() (*ConfigApp, error) {
 
 	var Config ConfigApp
 	Config.BancoDeDados.Host = os.Getenv("DB_HOST")
-
+	//passa eu profesor
 	Config.BancoDeDados.Usuario = os.Getenv("DB_USER")
 	Config.BancoDeDados.Senha = os.Getenv("DB_PASS")
 	Config.BancoDeDados.Banco = os.Getenv("DB_NAME")
