@@ -1,4 +1,3 @@
-// database.go
 package main
 
 import (
@@ -8,23 +7,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-type BancoDeDados struct {
-	Host    string `json:"host"`
-	Porta   int    `json:"porta"`
-	Usuario string `json:"usuario"`
-	Senha   string `json:"senha"`
-	Banco   string `json:"banco"`
-	URL     string `json:"url"`
-}
-
-// Struct para a configuração da aplicação
-type ConfigApp struct {
-	URLFila      string       `json:"url-fila"`
-	NomeFila     string       `json:"nome-fila"`
-	URLFrontend  string       `json:"url-frontend"`
-	BancoDeDados BancoDeDados `json:"banco-de-dados"`
-}
 
 func GetConfig(tipo_ambiente bool) (*ConfigApp, error) {
 	var Config ConfigApp
@@ -55,7 +37,6 @@ func ConectaBanco() *sql.DB {
 	//db, err := sql.Open("mysql", "username:password@tcp(<ip_do_banco>:3306)/banco")
 
 	db, er := sql.Open("mysql", str_conn)
-
 	if er != nil {
 		return nil
 	}
