@@ -26,17 +26,26 @@ type ConfigApp struct {
 	BancoDeDados BancoDeDados `json:"banco-de-dados"`
 }
 
-func GetConfig() (*ConfigApp, error) {
-
+func GetConfig(tipo_ambiente bool) (*ConfigApp, error) {
 	var Config ConfigApp
-	Config.BancoDeDados.Host = os.Getenv("DB_HOST")
-	//passa eu profesor
-	Config.BancoDeDados.Usuario = os.Getenv("DB_USER")
-	Config.BancoDeDados.Senha = os.Getenv("DB_PASS")
-	Config.BancoDeDados.Banco = os.Getenv("DB_NAME")
-	Config.NomeFila = os.Getenv("NOME_FILA")
-	Config.URLFila = os.Getenv("URL_FILA")
-	Config.URLFrontend = os.Getenv("URL_FRONTEND")
+
+	if tipo_ambiente {
+		Config.BancoDeDados.Host = os.Getenv("DB_HOST")
+		//passa eu profesor
+		Config.BancoDeDados.Usuario = os.Getenv("DB_USER")
+		Config.BancoDeDados.Senha = os.Getenv("DB_PASS")
+		Config.BancoDeDados.Banco = os.Getenv("DB_NAME")
+		Config.NomeFila = os.Getenv("NOME_FILA")
+		Config.URLFila = os.Getenv("URL_FILA")
+
+	} else {
+		Config.BancoDeDados.Host = "192.168.1.31"
+		Config.BancoDeDados.Usuario = "root"
+		Config.BancoDeDados.Senha = "123456"
+		Config.BancoDeDados.Banco = "examed"
+		Config.NomeFila = "exames-pendentes"
+		Config.URLFila = "192.168.1.31"
+	}
 
 	return &Config, nil
 }
@@ -53,45 +62,20 @@ func ConectaBanco() *sql.DB {
 	return db
 }
 
-// func GetStringConfig() string {
-// 	var Config ConfigApp
-// 	Config.BancoDeDados.Host = os.Getenv("DB_HOST")
-
-// 	Config.BancoDeDados.Usuario =  os.Getenv("DB_USER")
-// 	Config.BancoDeDados.Senha = os.Getenv("DB_PASS")
-// 	Config.BancoDeDados.Banco = os.Getenv("DB_NAME")
-// 	Config.NomeFila = os.Getenv("NOME_FILA")
-// 	Config.URLFila = os.Getenv("URL_FILA")
-// 	Config.URLFrontend = os.Getenv("URL_FRONTEND")
-
-// 	//config, err := GetConfig()
-// 	//db := config.BancoDeDados
-// 	//str_conn := MONTE AQUI
-// 	str_conn := "root:123456@tcp(192.168.207.152:3306)/examed"
-// 	// if err != nil {
-// 	// 	fmt.Println("Erro ao ler o arquivo de configuração:", err)
-// 	// 	return ""
-// 	// }
-
-// 	return str_conn
-// }
-
 func GetStringConfig() string {
-	var Config ConfigApp
+	Config, er := GetConfig(false)
+	//var Config ConfigApp
+	
+	if er != nil {
+		return ""
+	}
 
-	// Config.BancoDeDados.Host = os.Getenv("DB_HOST")
-	// Config.BancoDeDados.Usuario = os.Getenv("DB_USER")
-	// Config.BancoDeDados.Senha = os.Getenv("DB_PASS")
-	// Config.BancoDeDados.Banco = os.Getenv("DB_NAME")
-	// Config.NomeFila = os.Getenv("NOME_FILA")
-	// Config.URLFila = os.Getenv("URL_FILA")
-	// Config.URLFrontend = os.Getenv("URL_FRONTEND")
-
-	Config.BancoDeDados.Host = "192.168.1.31"
-	Config.BancoDeDados.Usuario = "root"
-	Config.BancoDeDados.Senha = "123456"
-	Config.BancoDeDados.Banco = "examed"
-	//Config.NomeFila = "exames-pendentes"
+	// CASO NÃO ESTEJA USANDO O DOCKER, DESCOMENTE A LINHA ABAIXO
+	// Config.BancoDeDados.Host = "192.168.1.31"
+	// Config.BancoDeDados.Usuario = "root"
+	// Config.BancoDeDados.Senha = "123456"
+	// Config.BancoDeDados.Banco = "examed"
+	// Config.NomeFila = "exames-pendentes"
 
 	// Exemplo para MySQL
 	// Formato: usuario:senha@tcp(host:porta)/banco
@@ -103,4 +87,18 @@ func GetStringConfig() string {
 	)
 
 	return strConn
+}
+
+func GetNomeExame(id_exame int) (string, error) {
+	db := ConectaBanco()
+	defer db.Close()
+
+	var nome_exame string
+	query := "SELECT tipo_exame FROM Exames WHERE id_exame = ?"
+	err := db.QueryRow(query, id_exame).Scan(&nome_exame)
+	if err != nil {
+		return "", err
+	}
+
+	return nome_exame, nil
 }

@@ -3,16 +3,16 @@ package main
 import "fmt"
 
 func main() {
-	config, er := GetConfig()
+	config, er := GetConfig(false)
+	SetConfig(config)
+
 
 	if er != nil {
 		fmt.Print("ERRO")
 	}
 
 	db := ConectaBanco()
-	SetConfig(config)
+	
 	SetDB(db)
 	InitRoutes()
-	PublishExame("exame")
-
 }

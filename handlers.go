@@ -3,6 +3,8 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
+
 	"log"
 	"net/http"
 
@@ -29,6 +31,14 @@ type Agendamentos struct {
     CartaoSus   string `json:"cartao_sus"`
 }
 
+type AgendamentoEmail struct{
+	DataHora      string `json:"data_hora"`
+	NomeExame     string `json:"nome_exame"`
+	Instrucoes    string `json:"instrucoes"`
+	Paciente      string `json:"nome_paciente"`
+	EmailPaciente string `json:"email_paciente"`
+}
+
 func failOnError(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %s", msg, err)
@@ -43,10 +53,26 @@ func SetConfig(config *ConfigApp) {
 	config_app = config
 }
 
-func PublishExame(exame string) {
-	host_fila := config_app.URLFila
+func PublishExame(agendamento Agendamentos) {
 
+	host_fila := config_app.URLFila
 	conn_fila, err := amqp.Dial("amqp://guest:guest@" + host_fila + "/")
+	//--------------------------------------------------
+	var exame AgendamentoEmail
+	exame.DataHora = agendamento.DataHora
+	exame.EmailPaciente = agendamento.EmailPaciente
+	exame.Instrucoes = agendamento.Instrucoes	
+	exame.NomeExame, err = GetNomeExame(agendamento.IdExame)
+	if err != nil {
+		failOnError(err, "Falha ao obter nome do exame")
+	}
+	exame.Paciente = agendamento.Paciente
+
+
+	body, err := json.Marshal(exame)
+	if err != nil {
+		failOnError(err, "Falha ao serializar exame")
+	}
 
 	failOnError(err, "Falha ao conectar ao RabbitMQ")
 	defer conn_fila.Close()
@@ -55,7 +81,6 @@ func PublishExame(exame string) {
 	failOnError(err, "Falha ao abrir canal")
 	defer ch.Close()
 
-	body := "Olá, mundo!"
 	err = ch.Publish(
 		"",                 // exchange
 		"exames-pendentes", // chave de roteamento (routing key)
@@ -134,12 +159,13 @@ func CadastraExame(c *gin.Context) {
 func AgendaExame(c *gin.Context) {
 
     var agendamento Agendamentos
-
+	
+	
     if err := c.ShouldBindJSON(&agendamento); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
         return
     }
-
+	
     // Insere o agendamento no banco de dados
     _, err := conn.Exec("INSERT INTO Agendamentos (data, id_exame, instrucao, nome_paciente, email_paciente, cpf, cartao_sus) VALUES (?, ?, ?, ?, ?, ?, ?)",
         agendamento.DataHora, agendamento.IdExame, agendamento.Instrucoes, agendamento.Paciente, agendamento.EmailPaciente, agendamento.CpfPaciente, agendamento.CartaoSus)
@@ -151,5 +177,13 @@ func AgendaExame(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{
         "message": "Agendamento cadastrado com sucesso"})  
 
+	//body, errr := json.Marshal(agendamento)
+
+    // if errr != nil {
+    //     c.JSON(400, gin.H{"erro": "Não foi possível ler o corpo da requisição"})
+    // }
+
+
+	PublishExame(agendamento)
 
 }

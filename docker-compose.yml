@@ -3,12 +3,16 @@ version: '3.8'
 services:
   backend:
     build: .
-    container_name: backend-go
+    container_name: publisher-go
     environment:
       DB_HOST: 192.168.207.152
       DB_PORT: 3306
       DB_USER: root
       DB_PASS: 123456
+      DB_NAME: examed
+      URL_FILA: 192.168.207.
+      NOME_FILA: exames-pendentes
+      
     ports:
       - "8080:8080"
      
