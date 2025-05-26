@@ -72,10 +72,10 @@ func GetAgendamentos(c *gin.Context) {
 	//data, id_exame, instrucao, nome_paciente, email_paciente, cpf, cartao_sus
 	rows, er := conn.Query(`select 	a.nome_paciente, 
 									a.email_paciente, 
-									a.data_hora, 
+									a.data, 
 									a.id_exame, 
 									e.tipo_exame, 
-									a.instrucoes, 
+									a.instrucao, 
 									a.cpf, 
 									a.cartao_sus
 									from Agendamentos a, Exames e
