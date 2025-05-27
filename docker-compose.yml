@@ -10,8 +10,9 @@ services:
       DB_USER: root
       DB_PASS: 123456
       DB_NAME: examed
-      URL_FILA: 
+      URL_FILA: 192.168.207.153
       NOME_FILA: exames-pendentes
+      TIPO_AMBIENTE: PROD
       
     ports:
       - "8080:8080"
