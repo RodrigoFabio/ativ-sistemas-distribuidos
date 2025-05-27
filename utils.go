@@ -24,6 +24,13 @@ func GetConfig() (*ConfigApp, error) {
 		Config.NomeFila = os.Getenv("NOME_FILA")
 		Config.URLFila = os.Getenv("URL_FILA")
 
+		log.Println("DB_HOST::", Config.BancoDeDados.Host)
+		log.Println("DB_USER::", Config.BancoDeDados.Usuario)
+		log.Println("DB_PASS::", Config.BancoDeDados.Senha)
+		log.Println("DB_NAME::", Config.BancoDeDados.Banco)
+		log.Println("NOME_FILA::", Config.NomeFila)
+		log.Println("URL_FILA::", Config.URLFila)
+
 	} else {
 		Config.BancoDeDados.Host = "192.168.207.163"
 		Config.BancoDeDados.Usuario = "root"

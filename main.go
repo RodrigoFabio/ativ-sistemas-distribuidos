@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
 )
 
 func main() {
 
-	fmt.Println(":::::::::::::::::::::::::::::::::::::")
-	log.Println("log com nível info")
+	log.Println(":::::::::::::::::::::::::::::::::::::")
+	log.Println(":::::::::::::INICIANDO::::::::::::::")
+	log.Println(":::::::::::::::::::::::::::::::::::::")
 
 	db := ConectaBanco()
 	SetDB(db)

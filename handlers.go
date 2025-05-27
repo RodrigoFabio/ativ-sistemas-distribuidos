@@ -69,7 +69,6 @@ func PublishExame(agendamento Agendamentos) {
 }
 
 func GetAgendamentos(c *gin.Context) {
-	fmt.Print("get agendamentos -------------------------")
 
 	rows, er := conn.Query(`select 	a.nome_paciente, 
 									a.email_paciente, 
@@ -84,7 +83,7 @@ func GetAgendamentos(c *gin.Context) {
 									limit 50;`)
 
 	if er != nil {
-		fmt.Print("get agendamentos -------------------------", er)
+		log.Println("Erro ao buscar agendamentos")
 	}
 
 	defer rows.Close()

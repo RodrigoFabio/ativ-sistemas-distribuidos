@@ -3,11 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-
 
 func ConectaBanco() *sql.DB {
 	str_conn := GetStringConfig()
@@ -15,6 +14,7 @@ func ConectaBanco() *sql.DB {
 
 	db, er := sql.Open("mysql", str_conn)
 	if er != nil {
+		log.Println("Erro ao tentar se conectar com o banco:", er)
 		return nil
 	}
 	return db
@@ -31,7 +31,7 @@ func GetStringConfig() string {
 		Config.BancoDeDados.Host,
 		Config.BancoDeDados.Banco,
 	)
-	fmt.Print("::::::::", strConn, ":::::::::")
+	log.Print("::::::::", strConn, ":::::::::")
 	return strConn
 }
 
