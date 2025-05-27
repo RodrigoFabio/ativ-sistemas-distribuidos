@@ -11,7 +11,7 @@ func InitRoutes() {
 	router := gin.Default()
 
 	router.Use(MiddlewareCors())
-	fmt.Print("chegou aqui")
+	fmt.Print(">>>chegou aqui<<<")
 	router.GET("/api/agendamentos", GetAgendamentos)
 
 	router.GET("/api/recupera-exames", RecuperaExames)

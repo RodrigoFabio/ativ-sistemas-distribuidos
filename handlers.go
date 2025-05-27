@@ -12,55 +12,49 @@ import (
 )
 
 var conn *sql.DB
-var config_app *ConfigApp
-
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-	}
-}
 
 func SetDB(database *sql.DB) {
 	conn = database
 }
 
-func SetConfig() {
-	config_app, errr := GetConfig(true)
+func PublishExame(agendamento Agendamentos) {
+	config_app, errr := GetConfig()
+
 	if errr != nil {
 		fmt.Printf(" Erro ao carregar config: %v\n", errr)
-	} else {
-		fmt.Printf(" Config carregada com sucesso: %+v\n", config_app)
 	}
-}
 
-func PublishExame(agendamento Agendamentos) {
+	host_fila := config_app.URLFila
+	conn_fila, err := amqp.Dial("amqp://guest:guest@" + host_fila + ":5672/")
+	//conn_fila, err := amqp.Dial("amqp://guest:guest@192.168.207.165:5672/")
 
-	//host_fila := config_app.URLFila
-	conn_fila, err := amqp.Dial("amqp://guest:guest@192.168.207.165:5672/")
-	//--------------------------------------------------
+	FailOnError(err, "Falha ao conectar ao RabbitMQ")
+
+	//mapping de agendamento para o tipo de mensagem que será enviada
 	var exame AgendamentoEmail
 	exame.DataHora = agendamento.DataHora
 	exame.EmailPaciente = agendamento.EmailPaciente
 	exame.Instrucoes = agendamento.Instrucoes
 	exame.NomeExame, err = GetNomeExame(agendamento.IdExame)
-	if err != nil {
-		failOnError(err, "Falha ao obter nome do exame")
-	}
+
+	FailOnError(err, "Falha ao obter nome do exame")
+
 	exame.Paciente = agendamento.Paciente
 
 	body, err := json.Marshal(exame)
+
 	if err != nil {
-		failOnError(err, "Falha ao serializar exame")
+		FailOnError(err, "Falha ao serializar exame")
 	}
 
-	failOnError(err, "Falha ao conectar ao RabbitMQ")
+	FailOnError(err, "Falha ao conectar ao RabbitMQ")
 	defer conn_fila.Close()
 
-	ch, err := conn_fila.Channel()
-	failOnError(err, "Falha ao abrir canal")
-	defer ch.Close()
+	channel, err := conn_fila.Channel()
+	FailOnError(err, "Falha ao abrir canal")
+	defer channel.Close()
 
-	err = ch.Publish(
+	err = channel.Publish(
 		"",                 // exchange
 		"exames-pendentes", // chave de roteamento (routing key)
 		false,              // mandatory
@@ -69,13 +63,14 @@ func PublishExame(agendamento Agendamentos) {
 			ContentType: "application/json",
 			Body:        []byte(body),
 		})
-	failOnError(err, "Falha ao publicar mensagem")
+
+	FailOnError(err, "Falha ao publicar mensagem")
 	log.Printf("Mensagem publicada: %s", body)
 }
 
 func GetAgendamentos(c *gin.Context) {
 	fmt.Print("get agendamentos -------------------------")
-	//data, id_exame, instrucao, nome_paciente, email_paciente, cpf, cartao_sus
+
 	rows, er := conn.Query(`select 	a.nome_paciente, 
 									a.email_paciente, 
 									a.data, 
@@ -86,7 +81,8 @@ func GetAgendamentos(c *gin.Context) {
 									a.cartao_sus
 									from Agendamentos a, Exames e
 									where a.id_exame = e.id_exame 
-									limit 10;`)
+									limit 50;`)
+
 	if er != nil {
 		fmt.Print("get agendamentos -------------------------", er)
 	}
@@ -119,7 +115,6 @@ func GetAgendamentos(c *gin.Context) {
 }
 
 func RecuperaExames(c *gin.Context) {
-	// Executa a consulta
 	rows, err := conn.Query("SELECT id_exame, tipo_exame, instrucoes FROM Exames")
 
 	if err != nil {
@@ -130,7 +125,6 @@ func RecuperaExames(c *gin.Context) {
 
 	defer rows.Close()
 
-	// Slice para armazenar os exames
 	var exames []Exames
 
 	// Itera sobre todas as linhas
@@ -159,13 +153,13 @@ func RecuperaExames(c *gin.Context) {
 }
 
 func CadastraExame(c *gin.Context) {
-
 	// Obtém os dados do corpo da requisição
 	var exame Exames
 	if err := c.ShouldBindJSON(&exame); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
 		return
 	}
+
 	// Insere o exame no banco de dados
 	_, err := conn.Exec("INSERT INTO Exames (tipo_exame, instrucoes) VALUES (?, ?)", exame.TipoExame, exame.Instrucoes)
 	if err != nil {
@@ -179,7 +173,6 @@ func CadastraExame(c *gin.Context) {
 }
 
 func AgendaExame(c *gin.Context) {
-
 	var agendamento Agendamentos
 
 	if err := c.ShouldBindJSON(&agendamento); err != nil {
@@ -195,14 +188,9 @@ func AgendaExame(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao cadastrar agendamento"})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Agendamento cadastrado com sucesso"})
-
-	//body, errr := json.Marshal(agendamento)
-
-	// if errr != nil {
-	//     c.JSON(400, gin.H{"erro": "Não foi possível ler o corpo da requisição"})
-	// }
 
 	PublishExame(agendamento)
 }
