@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -23,14 +24,19 @@ func SetDB(database *sql.DB) {
 	conn = database
 }
 
-func SetConfig(config *ConfigApp) {
-	config_app = config
+func SetConfig() {
+	config_app, errr := GetConfig(true)
+	if errr != nil {
+		fmt.Printf(" Erro ao carregar config: %v\n", errr)
+	} else {
+		fmt.Printf(" Config carregada com sucesso: %+v\n", config_app)
+	}
 }
 
 func PublishExame(agendamento Agendamentos) {
 
-	host_fila := config_app.URLFila
-	conn_fila, err := amqp.Dial("amqp://guest:guest@" + host_fila + "/")
+	//host_fila := config_app.URLFila
+	conn_fila, err := amqp.Dial("amqp://guest:guest@192.168.207.165:5672/")
 	//--------------------------------------------------
 	var exame AgendamentoEmail
 	exame.DataHora = agendamento.DataHora
@@ -68,7 +74,7 @@ func PublishExame(agendamento Agendamentos) {
 }
 
 func GetAgendamentos(c *gin.Context) {
-
+	fmt.Print("get agendamentos -------------------------")
 	//data, id_exame, instrucao, nome_paciente, email_paciente, cpf, cartao_sus
 	rows, er := conn.Query(`select 	a.nome_paciente, 
 									a.email_paciente, 
@@ -82,7 +88,7 @@ func GetAgendamentos(c *gin.Context) {
 									where a.id_exame = e.id_exame 
 									limit 10;`)
 	if er != nil {
-		log.Print(er)
+		fmt.Print("get agendamentos -------------------------", er)
 	}
 
 	defer rows.Close()

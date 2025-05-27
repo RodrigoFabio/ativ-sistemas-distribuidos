@@ -5,12 +5,12 @@ services:
     build: .
     container_name: publisher-go
     environment:
-      DB_HOST: 192.168.207.152
+      DB_HOST: 192.168.207.163
       DB_PORT: 3306
       DB_USER: root
       DB_PASS: 123456
       DB_NAME: examed
-      URL_FILA: 192.168.207.
+      URL_FILA: 
       NOME_FILA: exames-pendentes
       
     ports:

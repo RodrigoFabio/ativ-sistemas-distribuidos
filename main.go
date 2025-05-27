@@ -1,16 +1,15 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 func main() {
-	config, er := GetConfig(false)
-	
-	SetConfig(config)
 
-	if er != nil {
-		fmt.Print("ERRO")
-	}
-
+	fmt.Println("mensagem de teste")
+	log.Println("log com nível info")
+	SetConfig()
 	db := ConectaBanco()
 	SetDB(db)
 	InitRoutes()

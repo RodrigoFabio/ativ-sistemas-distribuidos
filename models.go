@@ -42,12 +42,12 @@ type AgendamentoEmail struct {
 }
 
 type RecuperaAgendamento struct {
-	NomePaciente 		string `json:"nome_paciente"`
-	EmailPaciente 		string `json:"email_paciente"` 
-	Data 				string `json:"data_hoa"`
-	IdExame 			int    `json:"id_exame"` 
-	TipoExame 			string `json:"tipo_exame"`
-	Instrucoes 			string `json:"instrucoes"`
-	Cpf 				string `json:"cpf"`
-	CartaoSus 			string `json:"cartao_sus"`
+	NomePaciente  string `json:"nome_paciente"`
+	EmailPaciente string `json:"email_paciente"`
+	Data          string `json:"data_hora"`
+	IdExame       int    `json:"id_exame"`
+	TipoExame     string `json:"tipo_exame"`
+	Instrucoes    string `json:"instrucoes"`
+	Cpf           string `json:"cpf"`
+	CartaoSus     string `json:"cartao_sus"`
 }

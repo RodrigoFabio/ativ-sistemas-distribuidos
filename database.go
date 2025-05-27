@@ -21,12 +21,12 @@ func GetConfig(tipo_ambiente bool) (*ConfigApp, error) {
 		Config.URLFila = os.Getenv("URL_FILA")
 
 	} else {
-		Config.BancoDeDados.Host = "192.168.1.31"
+		Config.BancoDeDados.Host = "192.168.207.163"
 		Config.BancoDeDados.Usuario = "root"
 		Config.BancoDeDados.Senha = "123456"
 		Config.BancoDeDados.Banco = "examed"
 		Config.NomeFila = "exames-pendentes"
-		Config.URLFila = "192.168.1.31"
+		Config.URLFila = "192.168.207.153:5672"
 	}
 
 	return &Config, nil
@@ -44,9 +44,9 @@ func ConectaBanco() *sql.DB {
 }
 
 func GetStringConfig() string {
-	Config, er := GetConfig(false)
+	Config, er := GetConfig(true)
 	//var Config ConfigApp
-	
+
 	if er != nil {
 		return ""
 	}
@@ -66,7 +66,7 @@ func GetStringConfig() string {
 		Config.BancoDeDados.Host,
 		Config.BancoDeDados.Banco,
 	)
-
+	fmt.Print("::::::::", strConn, ":::::::::")
 	return strConn
 }
 
